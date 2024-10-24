@@ -8,8 +8,6 @@ Here's a detailed `readme.md` file for the **CI LocalBusiness Schema** WordPress
 **Requires at least:** 5.8  
 **Tested up to:** 6.3  
 **Requires PHP:** 8.0+  
-**License:** GPLv3  
-**License URI:** https://www.gnu.org/licenses/gpl-3.0.html  
 
 ## Description
 
@@ -106,10 +104,6 @@ You can always override the automatically generated schema by manually editing i
 - Added RankMath schema deactivation.
 - Injected valid LocalBusiness JSON-LD schema into the site’s `<head>`.
 - Customizable schema option via the WordPress admin interface.
-
-## License
-
-This plugin is licensed under the GPLv3 license. See the LICENSE file for more details.
 
 ---
 
