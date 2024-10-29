@@ -125,7 +125,7 @@ PROMPT;
     {
         $api_url = 'https://api.openai.com/v1/completions';
         $body = json_encode([
-            'model' => 'text-davinci-003',
+            'model' => 'gpt-3.5-turbo-0125',
             'prompt' => $prompt,
             'max_tokens' => 2048,
             'temperature' => 0.7
