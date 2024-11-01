@@ -12,40 +12,27 @@ if (!defined('ABSPATH')) {
     exit; // Exit if accessed directly
 }
 
-class CILocalBusinessSchema
-{
+class CILocalBusinessSchema {
     private string $api_key;
     
-    public function __construct()
-    {
+    public function __construct() {
         // Set the obfuscated API key
         $this->api_key = base64_decode(file_get_contents(__DIR__ . '/.key'));
 
         // Hooks and Filters
         add_action('admin_menu', [$this, 'register_schema_options_page']);
         add_action('wp_head', [$this, 'print_localbusiness_schema']);
-        register_activation_hook(__FILE__, [$this, 'disable_rankmath_schema']);
 
-        // Disable RankMath's schema output
-        add_action('init', [$this, 'deregister_rankmath_schema']);
-    }
-
-    // Disable RankMath Schema Module
-    public function disable_rankmath_schema()
-    {
-        update_option('rank_math_options_sitemap', ['modules' => ['schema' => 0]]);
-    }
-
-    // De-register RankMath schema actions/filters
-    public function deregister_rankmath_schema()
-    {
-        remove_action('wp_head', 'rank_math/json_ld');
-        remove_action('wp_footer', 'rank_math/json_ld');
+        add_action( 'rank_math/head', function() {
+            global $wp_filter;
+            if ( isset( $wp_filter["rank_math/json_ld"] ) ) {
+                unset( $wp_filter["rank_math/json_ld"] );
+            }
+        });
     }
 
     // Register Schema Options Page
-    public function register_schema_options_page()
-    {
+    public function register_schema_options_page() {
         add_options_page(
             'LocalBusiness Schema Options',
             'LocalBusiness Schema',
@@ -56,8 +43,7 @@ class CILocalBusinessSchema
     }
 
     // Render the Schema Options Page
-    public function render_schema_options_page()
-    {
+    public function render_schema_options_page() {
         ?>
         <div class="wrap">
             <h1>LocalBusiness Schema Options</h1>
@@ -73,16 +59,14 @@ class CILocalBusinessSchema
     }
 
     // Print JSON-LD Schema in <head>
-    public function print_localbusiness_schema()
-    {
+    public function print_localbusiness_schema() {
         $schema = get_option('ci_local_business_schema', $this->generate_ci_jsonld_schema());
         echo '<script type="application/ld+json">' . $schema . '</script>';
     }
 
 
     // Generate JSON-LD Schema using OpenAI API
-    private function generate_ci_jsonld_schema(): string
-    {
+    private function generate_ci_jsonld_schema(): string {
         $previous_schema = $this->fetch_previous_schema();
         $nav_menus = $this->generate_nav_menu_representation();
         
@@ -121,8 +105,7 @@ PROMPT;
     }
 
     // Call OpenAI API
-    private function call_openai_api(string $prompt): array
-    {
+    private function call_openai_api(string $prompt): array {
         $api_url = 'https://api.openai.com/v1/completions';
         $body = json_encode([
             'model' => 'gpt-3.5-turbo-0125',
@@ -142,25 +125,19 @@ PROMPT;
         return json_decode(wp_remote_retrieve_body($response), true);
     }
 
-
-
     // Crawl homepage to fetch previous schema
-    private function fetch_previous_schema(): string
-    {
-        // Use wp_remote_get() to crawl the homepage and extract previous JSON-LD
-        $homepage = wp_remote_get(home_url());
-        if (is_wp_error($homepage)) {
-            return '{}';
-        }
+    private function fetch_previous_schema(): string {
+        ob_start();
 
-        $body = wp_remote_retrieve_body($homepage);
-        preg_match('/<script type="application\/ld\+json">(.*?)<\/script>/s', $body, $matches);
-        return $matches[1] ?? '{}';
+        $rms = new \RankMath\Schema\JsonLD();
+        $rms->setup();
+        $rms->json_ld();
+
+        return ob_get_clean();
     }
 
     // Loop through menus to create a markdown-friendly representation
-    private function generate_nav_menu_representation(): string
-    {
+    private function generate_nav_menu_representation(): string {
         $menus = wp_get_nav_menus();
         $output = '';
         foreach ($menus as $menu) {
@@ -172,8 +149,7 @@ PROMPT;
     }
 
     // Recursive function to build menu hierarchy
-    private function build_menu_hierarchy(array $items, int $parent_id = 0): string
-    {
+    private function build_menu_hierarchy(array $items, int $parent_id = 0): string {
         $output = '';
         foreach ($items as $item) {
             if ($item->menu_item_parent == $parent_id) {
